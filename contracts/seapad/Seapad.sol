@@ -114,6 +114,9 @@ contract Seapad {
     // After funded functions
     //
     //////////////////////////////////////////////////////////////////////
+
+    // do we unlock after achieving milestone or token can be unlocked any time?
+    // what happens if milestones are not achieved?
     function unlockInvestment() external {
 
     }
