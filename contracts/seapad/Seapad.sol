@@ -81,6 +81,7 @@ contract Seapad {
     function entrance(uint256 projectId, uint256 amount, uint8 v, bytes32[2] memory sig) external {
         Project storage project = projects[projectId];
         require(project.entrances < project.entranceLimit, "All entries are full");
+        // require to tranfer user token
     }
 
     function publicSale(uint256 projectId, uint256 amount, uint8 v, bytes32[2] memory sig) external {
