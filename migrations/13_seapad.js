@@ -1,4 +1,5 @@
 var Tier = artifacts.require("./SeapadTier.sol");
+var Submission = artifacts.require("./SeapadSubmission.sol");
 
 // The SeapadTier (Tier) contract constructor parameters
 // address _crowns, address _claimVerifier, uint256[3] memory _fees
@@ -21,7 +22,9 @@ module.exports = async function(deployer, network) {
     
     if (network == "development") {
         await deployer.deploy(Tier, Crowns.address, claimVerifier, fees);
+        await deployer.deploy(Submission);
         
         console.log("Deployed SeacapeTier address: " + Tier.address);
+        console.log("Deployed SeascapeSubmission address: " + Submission.address);
     } 
 };
