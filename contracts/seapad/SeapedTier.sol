@@ -16,7 +16,7 @@ contract SeapadTier is Ownable {
 
     struct Badge {
         uint8 level;
-        bool used;
+        bool usable;
         uint256 nonce;
     }
 
@@ -99,11 +99,13 @@ contract SeapadTier is Ownable {
         require(level >= 0 && level < 4, "Seapad: INVALID_PARAMETER");
         Badge storage badge = badges[msg.sender];
         
-        // If Tier exists, then user can claim the same Badge
-        if (badge.used) {
-            require(badge.level == level, "Seapad: INVALID_LEVEL");
+        // if badge is used, then user can reclaim it.
+        if (!badge.usable) {
+            require(badge.level == level, "Seapad: LEVEL_MISMATCH");
         } else if (level != 0) {
             require(badge.level + 1 == level, "Seapad: INVALID_LEVEL");
+        } else {
+            require(false, "Seapad: CLAIM_0");
         }
 
         // investor, level verification
@@ -118,7 +120,7 @@ contract SeapadTier is Ownable {
         require(crowns.spendFrom(msg.sender, fees[level]), "Seapad: CWS_UNSPEND");
 
         badge.level = level;
-        badge.used = false;
+        badge.usable = true;
         badge.nonce = badge.nonce + 1;      // Prevent usage of signature the same time.
 
         emit Claim(msg.sender, level);
@@ -134,9 +136,9 @@ contract SeapadTier is Ownable {
         Badge storage badge = badges[investor];
 
         require(badge.level == level, "Seapad: INVALID_LEVEL");
-        require(!badge.used, "Seapad: ALREADY_USED");
+        require(badge.usable, "Seapad: ALREADY_USED");
 
-        badge.used = false;
+        badge.usable = false;
 
         emit Use(investor, level);
     }

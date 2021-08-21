@@ -18,7 +18,7 @@ async function getAccount(index) {
 
 module.exports = async function(deployer, network) {
     claimVerifier = await getAccount(0);
-
+    
     if (network == "development") {
         await deployer.deploy(Tier, Crowns.address, claimVerifier, fees);
         
