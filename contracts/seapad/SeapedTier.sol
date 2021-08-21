@@ -9,7 +9,7 @@ import "./../crowns/erc-20/contracts/CrownsToken/CrownsToken.sol";
  *  @author Medet Ahmetson (@ahmetson)
  *  @notice This contract tracks the tier of every user, tier allocation by each project.
  */
-contract SeapedTier is Ownable {
+contract SeapadTier is Ownable {
     using Counters for Counters.Counter;
 
     CrownsToken private immutable crowns;
