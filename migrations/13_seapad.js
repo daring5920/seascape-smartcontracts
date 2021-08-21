@@ -23,9 +23,9 @@ module.exports = async function(deployer, network) {
     if (network == "development") {
         await deployer.deploy(Tier, Crowns.address, claimVerifier, fees);
         
-        console.log("Deployed SeacapeTier address: " + Tier.address);
+        console.log("Deployed SeapadTier address: " + Tier.address);
 
         await deployer.deploy(Submission, Tier.address);
-        console.log("Deployed SeascapeSubmission address: " + Submission.address);
+        console.log("Deployed SeapadSubmission address: " + Submission.address);
     } 
 };
