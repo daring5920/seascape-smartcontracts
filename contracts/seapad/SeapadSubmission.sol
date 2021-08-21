@@ -2,6 +2,7 @@ pragma solidity ^0.6.7;
 
 import "./../openzeppelin/contracts/access/Ownable.sol";
 import "./../openzeppelin/contracts/utils/Counters.sol";
+import "./SeapadTier.sol";
 
 /**
  * @notice This contract initiates the first stage of the Project funding.
@@ -12,6 +13,8 @@ contract SeapadSubmission is Ownable {
     using Counters for Counters.Counter;
 
     Counters.Counter private projectId;
+
+    SeapadTier private seapadTier;
 
     struct Project {
         uint256 startTime;
@@ -26,8 +29,11 @@ contract SeapadSubmission is Ownable {
     event AddProject(uint256 indexed projectId, uint256 startTime, uint256 endTime);
     event Submit(uint256 indexed projectId, address indexed participant, uint256 indexed submissionId, uint256 submissionTime);
 
-    constructor() public {
+    constructor(address _seapadTier) public {
+        require(_seapadTier != address(0), "Seapad: ZERO_ADDRESS");
         projectId.increment(); 	// starts at value 1
+
+        seapadTier = SeapadTier(_seapadTier);
     }
 
     function totalProjects() external view returns(uint256) {
@@ -60,6 +66,9 @@ contract SeapadSubmission is Ownable {
         require(now >= project.startTime, "Seapad: NOT_STARTED_YET");
         require(now <= project.endTime, "Seapad: FINISHED");
         require(submissions[id][msg.sender] == false, "Seapad: SUBMITTED_ALREADY");
+
+        uint8 tierLevel = seapadTier.getTierLevel(msg.sender);
+        require(tierLevel > 0, "Seapad: NOT_QUALIFIED");
 
         project.participants = project.participants + 1;
 
