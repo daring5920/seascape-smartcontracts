@@ -11,13 +11,13 @@ let fees = [
     web3.utils.toWei("100", "ether"),   // Tier 3
 ];
 
-async function getAccount(id) {
+async function getAccount(index) {
     let accounts = await web3.eth.getAccounts();
-    return accounts[id];
+    return accounts[index];
 }
 
 module.exports = async function(deployer, network) {
-    claimVerifier = await getAccount();
+    claimVerifier = await getAccount(0);
 
     if (network == "development") {
         await deployer.deploy(Tier, Crowns.address, claimVerifier, fees);
