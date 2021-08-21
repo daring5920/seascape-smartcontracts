@@ -45,7 +45,7 @@ contract SeapadSubmission is Ownable {
     /// @param endTime of the submission. This is not th end of the project funding.
     function addProject(uint256 startTime, uint256 endTime) external onlyOwner {
         require(startTime > 0, "Seapad: ZERO_ADDRESS");
-        require(now > startTime, "Seapad: TIME_PASSED");
+        require(now < startTime, "Seapad: TIME_PASSED");
         require(endTime > startTime, "Seapad: INCORRECT_END_TIME");
 
         uint256 id = projectId.current();
