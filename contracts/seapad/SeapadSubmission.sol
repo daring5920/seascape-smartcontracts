@@ -8,7 +8,7 @@ import "./../openzeppelin/contracts/utils/Counters.sol";
  * Users are submittion for the lottery within the given time period for the project.
  * @dev In order to start a new project funding, the first thing to do is add project here.
  */
-contract SeapadProject is Ownable {
+contract SeapadSubmission is Ownable {
     using Counters for Counters.Counter;
 
     Counters.Counter private projectId;
