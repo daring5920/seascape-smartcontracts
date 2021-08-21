@@ -22,9 +22,10 @@ module.exports = async function(deployer, network) {
     
     if (network == "development") {
         await deployer.deploy(Tier, Crowns.address, claimVerifier, fees);
-        await deployer.deploy(Submission);
         
         console.log("Deployed SeacapeTier address: " + Tier.address);
+
+        await deployer.deploy(Submission, Tier.address);
         console.log("Deployed SeascapeSubmission address: " + Submission.address);
     } 
 };
