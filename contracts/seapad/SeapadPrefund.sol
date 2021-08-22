@@ -25,6 +25,10 @@ contract SeapadPrefund is Ownable {
     /// @notice The second phase information of the project
     mapping(uint256 => Project) public projects;
 
+    /// @notice The investor prefunds in the project
+    /// @dev Project -> Investor -> funded
+    mapping(uint256 => mapping(address => bool)) public investments;
+
     /// @notice An account that tracks and prooves the Tier level to claim
     /// It tracks the requirements on the server side.
     /// @dev Used with v, r, s
@@ -77,13 +81,16 @@ contract SeapadPrefund is Ownable {
         emit AddProject(projectId, _token, submissionEndTime, endTime, pools, fixedPrices);
     }
 
+    /// @dev v, r, s are used to ensure on server side that user passed KYC
     function prefund(uint256 projectId, uint8 v, bytes32 r, bytes32 s) external payable {
         require(projectId > 0, "Seapad: ZERO_ADDRESS");
         Project storage project = projects[projectId];
         require(project.startTime > 0, "Seapad: NO_PROJECT");
+        require(investments[projectId][msg.sender] == false, "Seapad: ALREADY_PREFUNDED");
 
         require(project.startTime >= now, "Seapad: TOO_EARLY");
         require(project.endTime <= now, "Seapad: TOO_LATE");
+        require(seapadSubmission.submissions(projectId, msg.sender), "Seapad: NOT_SUBMITTED");
 
         uint8 level = seapadTier.getTierLevel(msg.sender);
         require(level > 0 && level < 4, "Seapad: NO_TIER");
@@ -106,7 +113,16 @@ contract SeapadPrefund is Ownable {
         }
 
         project.collectedAmounts[level - 1] = project.collectedAmounts[level - 1] + project.fixedPrices[level - 1];
+        investments[projectId][msg.sender] = true;
 
         emit Prefund(projectId, msg.sender, level, now);
+    }
+
+    function getEndTime(uint256 id) external view returns(uint256) {
+        if (id == 0 || id <= seapadSubmission.totalProjects()) {
+            return 0;
+        }
+
+        return projects[id].endTime;
     }
 }
