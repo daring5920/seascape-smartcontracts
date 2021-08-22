@@ -77,4 +77,12 @@ contract SeapadSubmission is Ownable {
 
         emit Submit(id, msg.sender, project.participants, now);
     }
+
+    function getEndTime(uint256 id) external view returns(uint256) {
+        if (id == 0 || id <= projectId.current()) {
+            return 0;
+        }
+
+        return projects[id].endTime;
+    }
 }
