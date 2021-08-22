@@ -82,6 +82,8 @@ contract SeapadPrefund is Ownable {
     }
 
     /// @dev v, r, s are used to ensure on server side that user passed KYC
+    //todo pass Tier eligable for prefunding.
+    //todo use the tier
     function prefund(uint256 projectId, uint8 v, bytes32 r, bytes32 s) external payable {
         require(projectId > 0, "Seapad: ZERO_ADDRESS");
         Project storage project = projects[projectId];
@@ -124,5 +126,16 @@ contract SeapadPrefund is Ownable {
         }
 
         return projects[id].endTime;
+    }
+
+    /// @notice returns total pool, and invested pool
+    /// @dev the first returning parameter is total pool. The second returning parameter is invested amount so far.
+    function getTotalPool(uint256 id) external view returns(uint256, uint256) {
+        Project storage project = projects[id];
+
+        uint256 totalPool = project.pools[0] + project.pools[1] + project.pools[2];
+        uint256 totalInvested = project.collectedAmounts[0] + project.collectedAmounts[1] + project.collectedAmounts[2];
+
+        return (totalPool, totalInvested);
     }
 }

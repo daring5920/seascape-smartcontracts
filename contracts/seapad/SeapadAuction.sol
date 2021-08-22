@@ -26,6 +26,7 @@ contract SeapadAuction is Ownable {
 
     mapping(uint256 => Project) public projects;
     mapping(uint256 => mapping(address => bool)) public participants;
+    // todo track how much CWS each participant spent.
 
     event AddProject(uint256 indexed projectId, uint256 startTime, uint256 endTime);
     event Participate(uint256 indexed projectId, address indexed participant, uint256 amount, uint256 time);
@@ -44,6 +45,7 @@ contract SeapadAuction is Ownable {
 
     /// @notice Add the last stage period for the project
     /// @dev the Start time of this phase is the end time of Prefund phase.
+    // todo add start time
     function addProject(uint256 projectId, uint256 endTime) external onlyOwner {
         require(projectId > 0, "Seapad: INVALID_PARAMETER");
         require(endTime > 0 && now < endTime, "Seapad: INVALID_TIME");
@@ -59,8 +61,12 @@ contract SeapadAuction is Ownable {
         emit AddProject(projectId, prefundEndTime, endTime);
     }
 
+    // todo cancel aution
+
     /// @notice User participates in the Public Auction
     /// @param amount of Crowns that user wants to spend
+    // todo add v,r,s for KYC or for checking lottery win
+    // todo lottery winners are not joining public auction.
     function participate(uint256 projectId, uint256 amount) external {
         require(projectId > 0 && amount > 0, "Seapad: ZERO_VALUE");
         Project storage project = projects[projectId];

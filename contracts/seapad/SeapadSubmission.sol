@@ -7,6 +7,8 @@ import "./SeapadTier.sol";
 /**
  * @notice This contract initiates the first stage of the Project funding.
  * Users are submittion for the lottery within the given time period for the project.
+ * Submission for lottery.
+ * 
  * @dev In order to start a new project funding, the first thing to do is add project here.
  */
 contract SeapadSubmission is Ownable {
@@ -69,6 +71,8 @@ contract SeapadSubmission is Ownable {
 
         uint8 tierLevel = seapadTier.getTierLevel(msg.sender);
         require(tierLevel > 0, "Seapad: NOT_QUALIFIED");
+        
+        /// @todo check that tier is usable
 
         project.participants = project.participants + 1;
 

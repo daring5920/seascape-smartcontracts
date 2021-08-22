@@ -140,6 +140,8 @@ contract SeapadTier is Ownable {
 
         badge.usable = false;
 
+        /// @todo make it back to zero
+
         emit Use(investor, level);
     }
 
