@@ -5,6 +5,7 @@ import "./../openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./../crowns/erc-20/contracts/CrownsToken/CrownsToken.sol";
 import "./SeapadTier.sol";
 import "./SeapadPrefund.sol";
+import "./SeapadSubmission.sol";
 
 /**
  *  @title Seapad Public Auction
@@ -13,6 +14,7 @@ import "./SeapadPrefund.sol";
 contract SeapadAuction is Ownable {
 
     SeapadTier private seapadTier;
+    SeapadSubmission private seapadSubmission;
     SeapadPrefund private seapadPrefund;
     CrownsToken private crowns;
 
@@ -28,12 +30,14 @@ contract SeapadAuction is Ownable {
     event AddProject(uint256 indexed projectId, uint256 startTime, uint256 endTime);
     event Participate(uint256 indexed projectId, address indexed participant, uint256 amount, uint256 time);
 
-    constructor(address _crowns, address tier, address prefund) public {
-        require(_crowns != address(0) && tier != address(0) && prefund != address(0), "Seapad: ZERO_ADDRESS");
+    constructor(address _crowns, address tier, address submission, address prefund) public {
+        require(_crowns != address(0) && tier != address(0) && prefund != address(0) && submission != address(0), "Seapad: ZERO_ADDRESS");
         require(tier != prefund, "Seapad: SAME_ADDRESS");
         require(tier != _crowns, "Seapad: SAME_ADDRESS");
+        require(tier != submission, "Seapad: SAME_ADDRESS");
 
         seapadTier = SeapadTier(tier);
+        seapadSubmission = SeapadSubmission(submission);
         seapadPrefund = SeapadPrefund(prefund);
         crowns = CrownsToken(_crowns);
     }
@@ -65,6 +69,8 @@ contract SeapadAuction is Ownable {
         require(now >= project.startTime, "Seapad: NOT_STARTED_YET");
         require(now <= project.endTime, "Seapad: FINISHED");
         require(participants[projectId][msg.sender] == false, "Seapad: PARTICIPATED_ALREADY");
+        require(seapadSubmission.submissions(projectId, msg.sender), "Seapad: NOT_SUBMITTED");
+        require(seapadPrefund.investments(projectId, msg.sender) == false, "Seapad: ALREADY_PREFUNDED");
 
         uint8 tierLevel = seapadTier.getTierLevel(msg.sender);
         require(tierLevel > 0, "Seapad: NOT_QUALIFIED");
