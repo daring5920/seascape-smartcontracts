@@ -16,7 +16,7 @@ contract SeapadNft is ERC721, ERC721Burnable, Ownable {
     Counters.Counter private tokenId;
 
     struct Params {
-	    uint256 weight;     // weight among total pool of spenders.
+	    uint256 allocation; // allocation among total pool of investors.
 	    uint8 tier;         // tier level
         uint256 projectId;  // project to which it's used	
     }
@@ -26,13 +26,13 @@ contract SeapadNft is ERC721, ERC721Burnable, Ownable {
     /// @dev returns parameters of Seascape NFT by token id.
     mapping(uint256 => Params) public paramsOf;
 
-    event Minted(address indexed owner, uint256 indexed id, uint256 weight, uint8 tier, uint256 projectId);
+    event Minted(address indexed owner, uint256 indexed id, uint256 allocation, uint8 tier, uint256 projectId);
     
     /**
      * @dev Sets the {name} and {symbol} of token.
      * Mints all tokens.
      */
-    constructor() public ERC721("Seapad NFT", "ROYAL") {
+    constructor() public ERC721("Lighthouse", "LIGHTHOUSE") {
 	    tokenId.increment(); // set to 1 the incrementor, so first token will be with id 1.
     }
 
@@ -42,16 +42,16 @@ contract SeapadNft is ERC721, ERC721Burnable, Ownable {
     }
 
     /// @dev ensure that all parameters are checked on factory smartcontract
-    function mint(address to, uint256 weight, uint8 tier, uint256 projectId) public onlyFactory returns(uint256) {
+    function mint(address to, uint256 allocation, uint8 tier, uint256 projectId) public onlyFactory returns(uint256) {
 	    uint256 _tokenId = tokenId.current();
 
         _safeMint(to, _tokenId);
 
-        paramsOf[_tokenId] = Params(weight, tier, projectId);
+        paramsOf[_tokenId] = Params(allocation, tier, projectId);
 
         tokenId.increment();
 
-        emit Minted(to, _tokenId, weight, tier, projectId);
+        emit Minted(to, _tokenId, allocation, tier, projectId);
         
         return _tokenId;
     }
