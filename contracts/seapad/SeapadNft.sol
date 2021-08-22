@@ -7,12 +7,10 @@ import "./../openzeppelin/contracts/utils/Counters.sol";
 import "./../openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./../openzeppelin/contracts/token/ERC721/ERC721Burnable.sol";
 
-/// @title Seascape NFT based on ERC721 standard.
-/// @notice Seascape NFT is the NFT used in Seascape Network platform.
-/// Nothing special about it except that it has two more additional parameters to
-/// for quality and generation to use in Seascape Platform.
+/// @title Seapad NFT
+/// @notice SeapadNFT is the NFT used in Seapad platform.
 /// @author Medet Ahmetson
-contract SeascapeNft is ERC721, ERC721Burnable, Ownable {
+contract SeapadNft is ERC721, ERC721Burnable, Ownable {
     using Counters for Counters.Counter;
 
     Counters.Counter private tokenId;
@@ -32,11 +30,9 @@ contract SeascapeNft is ERC721, ERC721Burnable, Ownable {
     
     /**
      * @dev Sets the {name} and {symbol} of token.
-     * Initializes {decimals} with a default value of 18.
      * Mints all tokens.
-     * Transfers ownership to another account. So, the token creator will not be counted as an owner.
      */
-    constructor() public ERC721("Seascape NFT", "SCAPES") {
+    constructor() public ERC721("Seapad NFT", "ROYAL") {
 	    tokenId.increment(); // set to 1 the incrementor, so first token will be with id 1.
     }
 
@@ -45,7 +41,7 @@ contract SeascapeNft is ERC721, ERC721Burnable, Ownable {
         _;
     }
 
-    /// @dev ensure that all parameters are checked on callee smartcontract
+    /// @dev ensure that all parameters are checked on factory smartcontract
     function mint(address to, uint256 weight, uint8 tier, uint256 projectId) public onlyFactory returns(uint256) {
 	    uint256 _tokenId = tokenId.current();
 
