@@ -84,7 +84,7 @@ contract SeapadAuction is Ownable {
     }
 
     function getEndTime(uint256 projectId) external view returns(uint256) {
-        if (projectId == 0) {
+        if (projectId == 0 || projectId <= seapadSubmission.totalProjects()) {
             return 0;
         }
 
