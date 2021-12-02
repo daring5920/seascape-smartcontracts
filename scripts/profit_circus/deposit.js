@@ -4,43 +4,51 @@ let Crowns = artifacts.require("CrownsToken");
 let Nft = artifacts.require("SeascapeNft");
 let Factory = artifacts.require("NftFactory");
 
-let depositInt = "5";
+let depositInt = "1";
 let depositAmount = web3.utils.toWei(depositInt, "ether");
-let accounts;
+
 
 /**
  * For test purpose, starts a game session
  */
 module.exports = async function(callback) {
     const networkId = await web3.eth.net.getId();
-    let res = init(networkId);
-    console.log("Deposit of "+depositInt+" CWS was successful!");
+    let res = await init(networkId);
 
     callback(null, res);
 };
 
 let init = async function(networkId) {
-    web3.eth.getAccounts(function(err,res) { accounts = res; });
-    let profitCircus = await ProfitCircus.deployed();
-    let lpToken = await LpToken.deployed();
 
-    let lastSessionId = await profitCircus.lastSessionIds.call(lpToken.address);
+    let accounts = await web3.eth.getAccounts();
+    console.log(accounts);
 
-    let nft = await Nft.deployed();
-    let balance = await nft.balanceOf(accounts[0]);
+    // // rinkeby
+    // let profitCircus    =  await ProfitCircus.at("0x9Ee9fb0930f2B5e3Dd4ad1BA2edB87D8549A9e07").catch(console.error);
+  	// let crowns          = await Crowns.at("0x168840Df293413A930d3D40baB6e1Cd8F406719D").catch(console.error);
 
-    let crowns = await Crowns.deployed();
-    let factory = await Factory.deployed();
+    // rinkeby v2
+    let profitCircus       = await ProfitCircus.at("0x1C9F8cF1bcC7900Ea784E4b8312c6eFc250958F6");
+    let crowns             = await Crowns.at("0x168840Df293413A930d3D40baB6e1Cd8F406719D");
+    
+    // // moonbase
+    // let profitCircus    = await ProfitCircus.at("0xa7a98F2BCa3dFe72010841cE6B12Ce4810D0f8F4");
+    // let crowns          = await Crowns.at("0xb3B32cBF0397AB03018504404EB1DDcd3a85cCB6");
 
-    let res =  await deposit(profitCircus, crowns, lastSessionId);
-    console.log(res.logs[0]);
-}.bind(this);
+    let lastSessionId = 1;
+    console.log("lastSessionId: ", parseInt(lastSessionId));
 
-let deposit = async function(lpMining, crowns, lastSessionId) {
+    let balance = await crowns.balanceOf(accounts[0]);
+    console.log("cws balance: " , parseInt(balance));
 
     //should approve nft rush to spend cws of player
-    await crowns.approve(lpMining.address, depositAmount);
+    console.log("attemping to approve");
+    await crowns.approve(profitCircus.address, depositAmount, {from: accounts[0]}).catch(console.error);
 
     //should spend CWS in nft rush
-    return await lpMining.deposit(lastSessionId, depositAmount, {from: accounts[0]});
+    console.log("attemping to deposit");
+    await profitCircus.deposit(lastSessionId, depositAmount, {from: accounts[0]})
+      .catch(console.error);
+
+    console.log("Deposited");
 }.bind(this);

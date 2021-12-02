@@ -1,5 +1,7 @@
 pragma solidity 0.6.7;
 
+import "./../openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./../openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./../openzeppelin/contracts/access/Ownable.sol";
 import "./../openzeppelin/contracts/math/SafeMath.sol";
 import "./../openzeppelin/contracts/utils/Counters.sol";
@@ -26,10 +28,12 @@ contract NftRush is Ownable, GameSession, Crowns, Leaderboard {
     /// @notice maximum CWS amount to spend in game.
     /// @dev in WEI format.
     uint256 public maxSpend;
+
+    address public signer; 
     
     struct Balance {
-	    uint256 amount;
-	    uint256 mintedTime;
+        uint256 amount;
+        uint256 mintedTime;
     }
 
     mapping(address => uint256) public nonces;
@@ -38,7 +42,7 @@ contract NftRush is Ownable, GameSession, Crowns, Leaderboard {
     /// @dev session id =>(wallet address => (Balance struct))
     mapping(uint256 => mapping(address => Balance)) public balances;
 
-    event SessionStarted(uint256 indexed sessionId, uint256 interval, uint256 period, uint256 generation);
+    event SessionStarted(address indexed rewardToken, uint256 indexed sessionId, uint256 interval, uint256 period, uint256 generation);
     event Spent(address indexed owner, uint256 sessionId, uint256 balanceAmount, uint256 prevMintedTime, uint256 amount);
     event Minted(address indexed owner, uint256 sessionId, uint256 nftId);
     event NftFactorySet(address factory);
@@ -53,7 +57,9 @@ contract NftRush is Ownable, GameSession, Crowns, Leaderboard {
         nftFactory = NftFactory(_factory);
 
         /// @dev set crowns is defined in Crowns.sol
-        setCrowns(_crowns);		
+        setCrowns(_crowns);     
+
+        signer = msg.sender;
 
         minSpend = _minSpend;
         maxSpend = _maxSpend;
@@ -78,16 +84,16 @@ contract NftRush is Ownable, GameSession, Crowns, Leaderboard {
      *
      *  - if some other session was launched before, that session should be ended.
      */
-    function startSession(uint256 _interval, uint256 _period, uint256 _startTime, uint256 _generation) external onlyOwner {
+    function startSession(address _rewardToken, uint256 _interval, uint256 _period, uint256 _startTime, uint256 _generation) external onlyOwner {
         if (lastSessionId() > 0) {
             require(!isActive(lastSessionId()), "NFT Rush: Can't start when session is active");
         }
 
-        uint256 _sessionId = _startSession(_interval, _period, _startTime, _generation);
+        uint256 _sessionId = _startSession(_rewardToken, _interval, _period, _startTime, _generation);
         
         announceLeaderboard(_sessionId, _startTime);
 
-        emit SessionStarted(_sessionId, _interval, _period, _generation);
+        emit SessionStarted(_rewardToken, _sessionId, _interval, _period, _generation);
     }
 
     
@@ -99,9 +105,21 @@ contract NftRush is Ownable, GameSession, Crowns, Leaderboard {
     function setNftFactory(address _address) external onlyOwner {
         require(_address != address(0), "Nft Factory can't be zero address");
 
-	    nftFactory = NftFactory(_address);
+        nftFactory = NftFactory(_address);
 
         emit NftFactorySet(_address);
+    }
+
+    
+    /** 
+     *  @notice set signer
+     *
+     *  @param _signer a new Address of signer
+     */
+    function setSigner(address _signer) external onlyOwner {
+        require(_signer != address(0), "Signer can't be zero address");
+        require(_signer != signer, "Can't be previous signer");
+        signer = _signer;
     }
 
     /**
@@ -111,7 +129,7 @@ contract NftRush is Ownable, GameSession, Crowns, Leaderboard {
      */
     function setMinSpendAmount(uint256 _amount) external onlyOwner {
         require(_amount > 0, "Min amount should be greater than 0");
-	    minSpend = _amount;
+        minSpend = _amount;
 
         emit MinSpendUpdated(_amount);
     }
@@ -122,7 +140,7 @@ contract NftRush is Ownable, GameSession, Crowns, Leaderboard {
      *  @param _amount a new minimal spending amount in WEI
      */
     function setMaxSpendAmount(uint256 _amount) external onlyOwner {
-	    require(_amount > minSpend, "Max amount should be greater than min amount");
+        require(_amount > minSpend, "Max amount should be greater than min amount");
         maxSpend = _amount;
 
         MaxSpendUpdated(_amount);
@@ -167,11 +185,11 @@ contract NftRush is Ownable, GameSession, Crowns, Leaderboard {
 
         Balance storage _balance  = balances[_sessionId][msg.sender];
 
-        require(_balance.amount.add(_amount) <= maxSpend, 
-            "NFT Rush: Can not spent more than max spending limit");
+        require(_balance.amount == 0,
+            "NFT Rush: Can not spent more than one time");
 
         _balance.amount = _balance.amount.add(_amount);
-	
+    
         emit Spent(msg.sender, _sessionId, _balance.amount, _balance.mintedTime, _amount);
     }
 
@@ -199,38 +217,38 @@ contract NftRush is Ownable, GameSession, Crowns, Leaderboard {
      */
     function mint(uint256 _sessionId, uint8 _v, bytes32 _r, bytes32 _s, uint8 _quality) external {
         Session storage _session = sessions[_sessionId];
-	    Balance storage _balance = balances[_sessionId][msg.sender];
+        Balance storage _balance = balances[_sessionId][msg.sender];
 
-	    require(_balance.amount > 0,
-		    "NFT Rush: No deposit was found");
-	    require(_balance.mintedTime == 0 ||
-		    (_balance.mintedTime.add(_session.interval) < block.timestamp),
-		    "NFT Rush: Still in locking period, please try again after locking interval passes");
-	
-	    /// Validation of quality
-	    /// message is generated as owner + amount + last time stamp + quality
-	    bytes memory _prefix = "\x19Ethereum Signed Message:\n32";
-	    bytes32 _messageNoPrefix =
-	    keccak256(abi.encodePacked(msg.sender,
-				       _balance.amount,
-				       _balance.mintedTime,
-				       _quality,
+        require(_balance.amount > 0,
+            "NFT Rush: No deposit was found");
+        require(_balance.mintedTime == 0 ||
+            (_balance.mintedTime.add(_session.interval) < block.timestamp),
+            "NFT Rush: Still in locking period, please try again after locking interval passes");
+    
+        /// Validation of quality
+        /// message is generated as owner + amount + last time stamp + quality
+        bytes memory _prefix = "\x19Ethereum Signed Message:\n32";
+        bytes32 _messageNoPrefix =
+        keccak256(abi.encodePacked(msg.sender,
+                       _balance.amount,
+                       _balance.mintedTime,
+                       _quality,
                        nonces[msg.sender])
-		      );
-	    bytes32 _message = keccak256(abi.encodePacked(_prefix, _messageNoPrefix));
-	    address _recover = ecrecover(_message, _v, _r, _s);
+              );
+        bytes32 _message = keccak256(abi.encodePacked(_prefix, _messageNoPrefix));
+        address _recover = ecrecover(_message, _v, _r, _s);
 
-	    require(_recover == owner(),
-		    "NFT Rush: Failed to verify quality signature");
-	
+        require(_recover == signer,
+            "NFT Rush: Failed to verify quality signature");
+    
         uint256 _tokenId = nftFactory.mintQuality(msg.sender, _session.generation, _quality);
-	    require(_tokenId > 0,
-		    "NFT Rush: failed to mint a token");
-	
-	    _balance.mintedTime = block.timestamp;
-	    _balance.amount = 0;
+        require(_tokenId > 0,
+            "NFT Rush: failed to mint a token");
+    
+        _balance.mintedTime = block.timestamp;
+        _balance.amount = 0;
         nonces[msg.sender]++;
 
-	    emit Minted(msg.sender, _sessionId, _tokenId);
+        emit Minted(msg.sender, _sessionId, _tokenId);
     }
 }
